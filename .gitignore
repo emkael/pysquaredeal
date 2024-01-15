@@ -1,5 +1,6 @@
 *.sqd
 *.sqk
+*.bak
 BigDeal/
 *.pyc
 .direnv/
