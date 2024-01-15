@@ -15,4 +15,9 @@ argparser_create.add_argument('--event-name', required=False, metavar='EVENT_NAM
 argparser_create.add_argument('--delayed-information', required=False, metavar='DELAYED_INFO', help='(description of) delayed information')
 
 arguments = argparser.parse_args()
-print(arguments)
+
+if arguments.command == 'create':
+    sd = SquareDeal()
+    sd.name = arguments.event_name
+    sd.delayed_info = arguments.delayed_information
+    sd.tofile(arguments.sqd_file, sqkpath=arguments.sqk_file)
