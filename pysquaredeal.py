@@ -1,10 +1,18 @@
-import sys
+import argparse, sys
 
 from squaredeal import SquareDeal
 
 
-sd = SquareDeal()
-sd.fromfile(sys.argv[1], encoding=sys.argv[2] if len(sys.argv) > 2 else 'utf-8')
-print(sd.__dict__)
-for phase in sd.phases:
-    print(phase.__dict__)
+argparser = argparse.ArgumentParser(prog='pysquaredeal.py')
+
+argparser.add_argument('sqd_file', metavar='SQD_FILE', help='path to SQD file')
+argparser.add_argument('--sqk-file', metavar='SQK_FILE', help='path to SQK file, if not provided, deduced from SQD file', required=False)
+
+subparsers = argparser.add_subparsers(title='command-specific arguments', metavar='COMMAND', dest='command')
+
+argparser_create = subparsers.add_parser('create', help='create new SQD/SQK pair')
+argparser_create.add_argument('--event-name', required=False, metavar='EVENT_NAME', help='event name (description)')
+argparser_create.add_argument('--delayed-information', required=False, metavar='DELAYED_INFO', help='(description of) delayed information')
+
+arguments = argparser.parse_args()
+print(arguments)
