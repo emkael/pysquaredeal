@@ -20,13 +20,13 @@ argparser_name.add_argument('event_name', metavar='EVENT_NAME', help='event name
 argparser_di = subparsers.add_parser('set_di', help='edit event delayed information (or its value)')
 argparser_di.add_argument('delayed_information', metavar='DELAYED_INFO', help='(description of) delayed information')
 
-argparser_publish = subparsers.add_parser('publish', help='mark SQD as published')
-
 argparser_phase = subparsers.add_parser('add_phase', help='add event phase')
 argparser_phase.add_argument('sessions', metavar='NO_SESSIONS', help='number of sessions in phase', type=int)
 argparser_phase.add_argument('boards', metavar='NO_BOARDS', help='number of boards in each session', type=int)
 argparser_phase.add_argument('prefix', metavar='PREFIX', help='ouput file prefix ("#" will be replaced by session number)')
 argparser_phase.add_argument('--description', required=False, metavar='DESCRIPTION', help='phase description')
+
+argparser_publish = subparsers.add_parser('publish', help='mark SQD as published')
 
 arguments = argparser.parse_args()
 
