@@ -1,4 +1,4 @@
-import hashlib, os, shutil
+import hashlib, os, random, string, shutil
 
 
 class SquareDealError(Exception):
@@ -129,3 +129,16 @@ class SquareDeal(object):
             sqd_contents.append('PU\n')
         with open(sqdpath, 'w') as sqdfile:
             sqdfile.writelines(sqd_contents)
+
+    def _generate_session_key(self):
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=60))
+
+    def add_phase(self, session_count, board_count, file_prefix, description=None):
+        phase = SquareDealPhase()
+        phase.sessions = session_count
+        phase.boards = board_count
+        phase.prefix = file_prefix
+        phase.info = description
+        for i in range(0, phase.sessions):
+            phase.s_keys.append(self._generate_session_key())
+        self.phases.append(phase)

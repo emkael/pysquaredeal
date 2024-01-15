@@ -1,6 +1,6 @@
 import argparse, sys
 
-from squaredeal import SquareDeal
+from squaredeal import SquareDeal, SquareDealError
 
 
 argparser = argparse.ArgumentParser(prog='pysquaredeal.py')
@@ -20,6 +20,14 @@ argparser_name.add_argument('event_name', metavar='EVENT_NAME', help='event name
 argparser_di = subparsers.add_parser('set_di', help='edit event delayed information (or its value)')
 argparser_di.add_argument('delayed_information', metavar='DELAYED_INFO', help='(description of) delayed information')
 
+argparser_publish = subparsers.add_parser('publish', help='mark SQD as published')
+
+argparser_phase = subparsers.add_parser('add_phase', help='add event phase')
+argparser_phase.add_argument('sessions', metavar='NO_SESSIONS', help='number of sessions in phase', type=int)
+argparser_phase.add_argument('boards', metavar='NO_BOARDS', help='number of boards in each session', type=int)
+argparser_phase.add_argument('prefix', metavar='PREFIX', help='ouput file prefix ("#" will be replaced by session number)')
+argparser_phase.add_argument('--description', required=False, metavar='DESCRIPTION', help='phase description')
+
 arguments = argparser.parse_args()
 
 if arguments.command == 'create':
@@ -30,10 +38,30 @@ if arguments.command == 'create':
 elif arguments.command == 'set_name':
     sd = SquareDeal()
     sd.fromfile(arguments.sqd_file, sqkpath=arguments.sqk_file)
+    if sd.published:
+        raise SquareDealError('Cannot change name: event already published')
     sd.name = arguments.event_name
     sd.tofile(arguments.sqd_file, sqkpath=arguments.sqk_file)
 elif arguments.command == 'set_di':
     sd = SquareDeal()
     sd.fromfile(arguments.sqd_file, sqkpath=arguments.sqk_file)
     sd.delayed_info = arguments.delayed_information
+    sd.tofile(arguments.sqd_file, sqkpath=arguments.sqk_file)
+elif arguments.command == 'publish':
+    sd = SquareDeal()
+    sd.fromfile(arguments.sqd_file, sqkpath=arguments.sqk_file)
+    if not sd.name:
+        raise SquareDealError('Cannot mark as published: event name is not set')
+    if not sd.delayed_info:
+        raise SquareDealError('Cannot mark as published: delayed information is not set')
+    if not sd.phases:
+        raise SquareDealError('Cannot mark as published: no phases are defined')
+    sd.published = True
+    sd.tofile(arguments.sqd_file, sqkpath=arguments.sqk_file)
+elif arguments.command == 'add_phase':
+    sd = SquareDeal()
+    sd.fromfile(arguments.sqd_file, sqkpath=arguments.sqk_file)
+    if sd.published:
+        raise SquareDealError('Cannot add phase: event already published')
+    sd.add_phase(arguments.sessions, arguments.boards, arguments.prefix, description=arguments.description)
     sd.tofile(arguments.sqd_file, sqkpath=arguments.sqk_file)
