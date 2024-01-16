@@ -4,3 +4,4 @@
 BigDeal/
 *.pyc
 .direnv/
+.envrc
