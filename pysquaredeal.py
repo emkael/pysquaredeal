@@ -1,4 +1,4 @@
-import argparse, sys
+import argparse, os, sys
 
 from squaredeal import SquareDeal, SquareDealError
 
@@ -7,6 +7,8 @@ argparser = argparse.ArgumentParser(prog='pysquaredeal.py')
 
 argparser.add_argument('sqd_file', metavar='SQD_FILE', help='path to SQD file')
 argparser.add_argument('--sqk-file', metavar='SQK_FILE', help='path to SQK file, if not provided, deduced from SQD file', required=False)
+argparser.add_argument('--encoding', required=False, default='utf-8', metavar='ENCODING', help='SQD/SQK input file encoding, defaults to UTF-8, output is always UTF-8')
+argparser.add_argument('--bigdealx-path', required=False, metavar='BIGDEALX_PATH', help='path to bigdealx executable, defaults to BIGDEALX_PATH environment variable')
 
 subparsers = argparser.add_subparsers(title='command-specific arguments', metavar='COMMAND', dest='command')
 
@@ -24,9 +26,13 @@ argparser_phase = subparsers.add_parser('add_phase', help='add event phase')
 argparser_phase.add_argument('sessions', metavar='NO_SESSIONS', help='number of sessions in phase', type=int)
 argparser_phase.add_argument('boards', metavar='NO_BOARDS', help='number of boards in each session', type=int)
 argparser_phase.add_argument('prefix', metavar='PREFIX', help='ouput file prefix ("#" will be replaced by session number)')
-argparser_phase.add_argument('--description', required=False, metavar='DESCRIPTION', help='phase description')
+argparser_phase.add_argument('description', nargs='?', metavar='DESCRIPTION', help='phase description')
 
 argparser_publish = subparsers.add_parser('publish', help='mark SQD as published')
+
+argparser_generate = subparsers.add_parser('generate', help='generate PBN')
+argparser_generate.add_argument('phase', nargs='?', type=int, metavar='PHASE', help='phase number, if empty, all phases will be generated')
+argparser_generate.add_argument('session', nargs='?', type=int, metavar='SESSION', help='session number, if empty, all sessions will be generated')
 
 arguments = argparser.parse_args()
 
@@ -65,3 +71,12 @@ elif arguments.command == 'add_phase':
         raise SquareDealError('Cannot add phase: event already published')
     sd.add_phase(arguments.sessions, arguments.boards, arguments.prefix, description=arguments.description)
     sd.tofile(arguments.sqd_file, sqkpath=arguments.sqk_file)
+elif arguments.command == 'generate':
+    if arguments.bigdealx_path is None:
+        arguments.bigdealx_path = os.environ.get('BIGDEALX_PATH', None)
+    SquareDeal.BIGDEALX_PATH = arguments.bigdealx_path
+    sd = SquareDeal()
+    sd.fromfile(arguments.sqd_file, sqkpath=arguments.sqk_file)
+    if not sd.published:
+        raise SquareDealError('Cannot generate PBN files: event info is not marked as published')
+    sd.generate(arguments.phase, arguments.session)

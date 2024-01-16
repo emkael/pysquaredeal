@@ -1,4 +1,4 @@
-import hashlib, os, random, string, shutil
+import base64, hashlib, os, random, shutil, string, subprocess
 
 
 class SquareDealError(Exception):
@@ -26,8 +26,34 @@ class SquareDealPhase(object):
     def tostring(self):
         return ':'.join([str(self.sessions), str(self.boards), self.prefix, self.info or ''])
 
+    def _output_file_name(self, session):
+        return self.prefix.replace('#', str(session))
+
+    def generate(self, session, delayed_info, reserve=False):
+        if not SquareDeal.BIGDEALX_PATH:
+            raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
+        delayed_info = base64.b64encode(delayed_info.encode('utf-8')).decode()
+        sessions_to_generate = range(0, self.sessions) if session is None else [session-1]
+        for session in sessions_to_generate:
+            session_key = self.s_keys[session]
+            session_key_len = int(len(session_key)/2)
+            session_left = session_key[0:session_key_len]
+            session_right = session_key[session_key_len:]
+            reserve_info = 'reserve' if reserve else 'original'
+            args = [SquareDeal.BIGDEALX_PATH,
+                    '-W', session_left,
+                    '-e', session_right,
+                    '-e', delayed_info,
+                    '-e', reserve_info,
+                    '-p', self._output_file_name(session+1),
+                    '-n', str(self.boards)]
+            subprocess.run(args, cwd=os.path.realpath(SquareDeal.BIGDEALX_PATH))
+
 
 class SquareDeal(object):
+
+    BIGDEALX_PATH=None
+
     def __init__(self):
         self.name = ''
         self.delayed_info = ''
@@ -142,3 +168,8 @@ class SquareDeal(object):
         for i in range(0, phase.sessions):
             phase.s_keys.append(self._generate_session_key())
         self.phases.append(phase)
+
+    def generate(self, phase, session):
+        phases_to_generate = range(0, len(self.phases)) if phase is None else [phase-1]
+        for phase in phases_to_generate:
+            self.phases[phase].generate(session, self.delayed_info)
