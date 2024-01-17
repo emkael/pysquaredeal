@@ -33,6 +33,7 @@ argparser_publish = subparsers.add_parser('publish', help='mark SQD as published
 argparser_generate = subparsers.add_parser('generate', help='generate PBN')
 argparser_generate.add_argument('phase', nargs='?', type=int, metavar='PHASE', help='phase number, if empty, all phases will be generated')
 argparser_generate.add_argument('session', nargs='?', type=int, metavar='SESSION', help='session number, if empty, all sessions will be generated')
+argparser_generate.add_argument('--reserve', action='store_true', help='generate reserve board set')
 
 arguments = argparser.parse_args()
 
@@ -79,4 +80,4 @@ elif arguments.command == 'generate':
     sd.fromfile(arguments.sqd_file, sqkpath=arguments.sqk_file)
     if not sd.published:
         raise SquareDealError('Cannot generate PBN files: event info is not marked as published')
-    sd.generate(arguments.phase, arguments.session)
+    sd.generate(arguments.phase, arguments.session, reserve=arguments.reserve)

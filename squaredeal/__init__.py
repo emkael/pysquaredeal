@@ -26,8 +26,8 @@ class SquareDealPhase(object):
     def tostring(self):
         return ':'.join([str(self.sessions), str(self.boards), self.prefix, self.info or ''])
 
-    def _output_file_name(self, session):
-        return self.prefix.replace('#', str(session))
+    def _output_file_name(self, session, reserve=False):
+        return self.prefix.replace('#', str(session)) + ('reserve' if reserve else '')
 
     def generate(self, session, delayed_info, reserve=False):
         if not SquareDeal.BIGDEALX_PATH:
@@ -45,7 +45,7 @@ class SquareDealPhase(object):
                     '-e', session_right,
                     '-e', delayed_info,
                     '-e', reserve_info,
-                    '-p', self._output_file_name(session+1),
+                    '-p', self._output_file_name(session+1, reserve),
                     '-n', str(self.boards)]
             subprocess.run(args, cwd=os.path.realpath(SquareDeal.BIGDEALX_PATH))
 
@@ -169,7 +169,7 @@ class SquareDeal(object):
             phase.s_keys.append(self._generate_session_key())
         self.phases.append(phase)
 
-    def generate(self, phase, session):
+    def generate(self, phase, session, reserve=False):
         phases_to_generate = range(0, len(self.phases)) if phase is None else [phase-1]
         for phase in phases_to_generate:
-            self.phases[phase].generate(session, self.delayed_info)
+            self.phases[phase].generate(session, self.delayed_value, reserve)
