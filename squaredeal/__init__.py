@@ -65,6 +65,8 @@ class SquareDeal(object):
         with open(sqdpath, encoding=encoding) as sqdfile:
             contents = [line.strip() for line in sqdfile.readlines()]
         for idx, line in enumerate(contents):
+            if line.startswith('#'):
+                continue
             linetype, _, linecontents = line.partition(' ')
             if linetype == 'TN':
                 self.name = linecontents
