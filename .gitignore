@@ -1,7 +1,10 @@
 *.sqd
 *.sqk
 *.bak
+*.pbn
 BigDeal/
+.bigdealrc
+deallog.txt
 *.pyc
 .direnv/
 .envrc
