@@ -1,4 +1,4 @@
-import base64, hashlib, os, random, shutil, string, subprocess
+import base64, hashlib, os, random, re, shutil, string, subprocess
 
 
 def generate_session_key():
@@ -30,8 +30,14 @@ class SquareDealPhase(object):
         return ':'.join([str(self.sessions), str(self.boards), self.prefix, self.info or ''])
 
     def _output_file_name(self, session, reserve=False):
-        # TODO: that funky multiple hash syntax for leading zeroes
-        return self.prefix.replace('#', str(session)) + ('reserve' if reserve else '')
+        prefix = self.prefix
+        session_search = re.findall(r'#+', prefix)
+        for session_match in sorted(session_search, reverse=True):
+            session_str = ('%0'+str(len(session_match))+'d') % (session)
+            prefix = prefix.replace(session_match, session_str)
+        if reserve:
+            prefix += 'reserve'
+        return prefix
 
     def generate(self, session, delayed_info, reserve=False):
         if not SquareDeal.BIGDEALX_PATH:
