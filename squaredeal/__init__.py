@@ -21,6 +21,7 @@ class SquareDealPhase(object):
         if len(parts) != 4:
             raise SquareDealError('Malformed phase definition: %s' % (phasestr))
         self.sessions = int(parts[0])
+        # TODO: parse the funky a-b,c-d,e-f and NxM syntax
         self.boards = int(parts[1])
         self.prefix = parts[2]
         self.info = parts[3]
@@ -29,6 +30,7 @@ class SquareDealPhase(object):
         return ':'.join([str(self.sessions), str(self.boards), self.prefix, self.info or ''])
 
     def _output_file_name(self, session, reserve=False):
+        # TODO: that funky multiple hash syntax for leading zeroes
         return self.prefix.replace('#', str(session)) + ('reserve' if reserve else '')
 
     def generate(self, session, delayed_info, reserve=False):
@@ -168,6 +170,7 @@ class SquareDeal(object):
             sqdfile.writelines(sqd_contents)
 
     def generate(self, phase, session, reserve=False):
+        # TODO: parse the funky n-m syntax for phase and session
         phases_to_generate = range(0, len(self.phases)) if phase is None else [phase-1]
         for phase in phases_to_generate:
             self.phases[phase].generate(session, self.delayed_value, reserve)

@@ -40,6 +40,7 @@ argparser_generate.add_argument('--reserve', action='store_true', help='generate
 
 arguments = argparser.parse_args()
 
+# TODO: this should be an interface class, also rename SquareDeal to SQD or sth and this to SquareDeal
 if arguments.command == 'create':
     sd = SquareDeal()
     sd.name = arguments.event_name
