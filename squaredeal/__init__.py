@@ -76,7 +76,7 @@ class SquareDealPhase(object):
             output_ranges += ranges
         return output_ranges[0:self.sessions]
 
-    def generate(self, session, delayed_info, reserve=False):
+    def generate(self, session, delayed_info, reserve=False, output_path=None):
         if not SquareDeal.BIGDEALX_PATH:
             raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
         delayed_info = base64.b64encode(delayed_info.encode('utf-8')).decode()
@@ -95,7 +95,7 @@ class SquareDealPhase(object):
                     '-e', reserve_info,
                     '-p', self._output_file_name(session+1, reserve),
                     '-n', board_ranges[session]]
-            subprocess.run(args)
+            subprocess.run(args, cwd=output_path)
 
 
 class SquareDeal(object):
@@ -109,6 +109,7 @@ class SquareDeal(object):
         self.hash = ''
         self.phases = []
         self.published = False
+        self.sqd_path = None
 
     def fromfile(self, sqdpath, sqkpath=None, encoding='utf-8'):
         with open(sqdpath, encoding=encoding) as sqdfile:
@@ -163,7 +164,9 @@ class SquareDeal(object):
                         raise SquareDealError('Session %d,%d missing a key in SQK' % (ph_idx+1, s_idx+1))
             sqk_hash = self._get_file_hash(sqkpath)
             if sqk_hash != self.hash:
-                raise SquareDealError('SQK hash mismtach: %s in SQD, % actual' % (self.hash, sqk_hash))
+                raise SquareDealError(
+                    'SQK hash mismtach: %s in SQD, % actual' % (self.hash, sqk_hash))
+            self.sqd_path = sqdpath
 
     def _deduce_sqk_path(self, sqdpath):
         sqkpath = list(os.path.splitext(sqdpath))
@@ -216,4 +219,7 @@ class SquareDeal(object):
     def generate(self, phase, session, reserve=False):
         phases_to_generate = parse_range_str(phase, len(self.phases))
         for phase in phases_to_generate:
-            self.phases[phase].generate(session, self.delayed_value, reserve)
+            self.phases[phase].generate(
+                session, self.delayed_value,
+                reserve=reserve,
+                output_path=os.path.realpath(os.path.dirname(self.sqd_path)) if self.sqd_path else None)
