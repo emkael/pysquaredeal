@@ -1,6 +1,6 @@
 import argparse, os, re, sys
 
-from squaredeal import SquareDeal, SquareDealError, SquareDealPhase, generate_session_key, validate_board_range_str
+from squaredeal.sqd import SquareDeal, SquareDealError, SquareDealPhase, generate_session_key, validate_board_range_str
 
 
 def board_range(arg_str):
