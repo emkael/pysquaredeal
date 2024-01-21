@@ -34,8 +34,8 @@ argparser_di = subparsers.add_parser('set_dv', help='edit event delayed informat
 argparser_di.add_argument('delayed_information', metavar='DELAYED_INFO', help='value of delayed information')
 
 argparser_generate = subparsers.add_parser('generate', help='generate PBN')
-argparser_generate.add_argument('phase', nargs='?', type=int, metavar='PHASE', help='phase number, if empty, all phases will be generated')
-argparser_generate.add_argument('session', nargs='?', type=int, metavar='SESSION', help='session number, if empty, all sessions will be generated')
+argparser_generate.add_argument('phase', nargs='?', metavar='PHASE', help='phase number or range, if empty, all phases will be generated')
+argparser_generate.add_argument('session', nargs='?', metavar='SESSION', help='session number or range, if empty, all sessions will be generated')
 argparser_generate.add_argument('--reserve', action='store_true', help='generate reserve board set')
 
 arguments = argparser.parse_args()

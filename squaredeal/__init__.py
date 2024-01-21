@@ -4,6 +4,26 @@ import base64, hashlib, os, random, re, shutil, string, subprocess
 def generate_session_key():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=60))
 
+def parse_range_str(range_str, max_count):
+    range_start = 0
+    range_end = max_count
+    if range_str:
+        try:
+            range_start = int(range_str) - 1
+            range_end = range_start + 1
+        except ValueError:
+            range_match = re.match(r'([0-9]+)-([0-9]+)', range_str)
+            if range_match:
+                range_start = int(range_match.group(1))-1
+                range_end = int(range_match.group(2))
+            else:
+                raise ValueError('Invalid range string: %s' % (range_str))
+    if range_start < 0:
+        raise ValueError('Value out of range: 0')
+    if range_end > max_count:
+        raise ValueError('Value out of range: %d' % (range_end))
+    return range(range_start, range_end)
+
 class SquareDealError(Exception):
     pass
 
@@ -43,7 +63,7 @@ class SquareDealPhase(object):
         if not SquareDeal.BIGDEALX_PATH:
             raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
         delayed_info = base64.b64encode(delayed_info.encode('utf-8')).decode()
-        sessions_to_generate = range(0, self.sessions) if session is None else [session-1]
+        sessions_to_generate = parse_range_str(session, self.sessions)
         for session in sessions_to_generate:
             session_key = self.s_keys[session]
             session_key_len = int(len(session_key)/2)
@@ -176,7 +196,6 @@ class SquareDeal(object):
             sqdfile.writelines(sqd_contents)
 
     def generate(self, phase, session, reserve=False):
-        # TODO: parse the funky n-m syntax for phase and session
-        phases_to_generate = range(0, len(self.phases)) if phase is None else [phase-1]
+        phases_to_generate = parse_range_str(phase, len(self.phases))
         for phase in phases_to_generate:
             self.phases[phase].generate(session, self.delayed_value, reserve)
