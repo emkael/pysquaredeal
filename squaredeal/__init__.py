@@ -157,11 +157,13 @@ class SquareDeal(object):
                 try:
                     self.phases[phase_no-1].s_keys[session_no-1] = lineparts[1]
                 except IndexError:
-                    raise SquareDealError('Session %s from SQK not declared in SQD' % (lineparts[0]))
+                    raise SquareDealError(
+                        'Session %s from SQK not declared in SQD' % (lineparts[0]))
             for ph_idx, phase in enumerate(self.phases):
                 for s_idx, s_key in enumerate(phase.s_keys):
                     if s_key is None:
-                        raise SquareDealError('Session %d,%d missing a key in SQK' % (ph_idx+1, s_idx+1))
+                        raise SquareDealError(
+                            'Session %d,%d missing a key in SQK' % (ph_idx+1, s_idx+1))
             sqk_hash = self._get_file_hash(sqkpath)
             if sqk_hash != self.hash:
                 raise SquareDealError(
@@ -193,8 +195,10 @@ class SquareDeal(object):
             for ph_idx, phase in enumerate(self.phases):
                 for s_idx, session_key in enumerate(phase.s_keys):
                     if session_key is None:
-                        raise SquareDealError('Missing session key for session %d,%d' % (ph_idx+1, s_idx+1))
-                    sqkfile.write(('%d,%d:%s\r\n' % (ph_idx+1, s_idx+1, session_key)).encode('utf8'))
+                        raise SquareDealError(
+                            'Missing session key for session %d,%d' % (ph_idx+1, s_idx+1))
+                    sqkfile.write(
+                        ('%d,%d:%s\r\n' % (ph_idx+1, s_idx+1, session_key)).encode('utf8'))
         self.hash = self._get_file_hash(sqkpath)
 
     def tofile(self, sqdpath, sqkpath=None, make_backups=True):
