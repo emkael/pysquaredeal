@@ -24,6 +24,15 @@ def parse_range_str(range_str, max_count):
         raise ValueError('Value out of range: %d' % (range_end))
     return range(range_start, range_end)
 
+
+def validate_board_range_str(range_str):
+    if range_str.isdigit():
+        return range_str
+    if re.match(r'^[0-9]+-[0-9]+$', range_str):
+        return range_str
+    raise ValueError('Invalid board range definition: %s' % (range_str))
+
+
 class SquareDealError(Exception):
     pass
 
@@ -41,8 +50,7 @@ class SquareDealPhase(object):
         if len(parts) != 4:
             raise SquareDealError('Malformed phase definition: %s' % (phasestr))
         self.sessions = int(parts[0])
-        # TODO: parse the funky a-b,c-d,e-f and NxM syntax
-        self.boards = int(parts[1])
+        self.boards = parts[1]
         self.prefix = parts[2]
         self.info = parts[3]
 
@@ -59,11 +67,21 @@ class SquareDealPhase(object):
             prefix += 'reserve'
         return prefix
 
+    def _parse_board_ranges(self, range_def):
+        ranges = [range_str.strip() for range_str in range_def.split(',')]
+        for range_str in ranges:
+            validate_board_range_str(range_str)
+        output_ranges = []
+        while len(output_ranges) < self.sessions:
+            output_ranges += ranges
+        return output_ranges[0:self.sessions]
+
     def generate(self, session, delayed_info, reserve=False):
         if not SquareDeal.BIGDEALX_PATH:
             raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
         delayed_info = base64.b64encode(delayed_info.encode('utf-8')).decode()
         sessions_to_generate = parse_range_str(session, self.sessions)
+        board_ranges = self._parse_board_ranges(self.boards)
         for session in sessions_to_generate:
             session_key = self.s_keys[session]
             session_key_len = int(len(session_key)/2)
@@ -76,7 +94,7 @@ class SquareDealPhase(object):
                     '-e', delayed_info,
                     '-e', reserve_info,
                     '-p', self._output_file_name(session+1, reserve),
-                    '-n', str(self.boards)]
+                    '-n', board_ranges[session]]
             subprocess.run(args)
 
 

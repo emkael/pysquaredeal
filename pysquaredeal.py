@@ -1,6 +1,18 @@
-import argparse, os, sys
+import argparse, os, re, sys
 
-from squaredeal import SquareDeal, SquareDealError, SquareDealPhase, generate_session_key
+from squaredeal import SquareDeal, SquareDealError, SquareDealPhase, generate_session_key, validate_board_range_str
+
+
+def board_range(arg_str):
+    ranges = []
+    for range_str in arg_str.split(','):
+        range_match = re.match(r'^([0-9]+)x([0-9]+)$', range_str)
+        if range_match:
+            subrange_count = int(range_match.group(2))
+            ranges += ['%d-%d' % (i*subrange_count+1, (i+1)*subrange_count) for i in range(0, int(range_match.group(1)))]
+            continue
+        ranges += [validate_board_range_str(range_str)]
+    return ','.join(ranges)
 
 
 argparser = argparse.ArgumentParser(prog='pysquaredeal.py')
@@ -24,7 +36,7 @@ argparser_di.add_argument('delayed_information', metavar='DELAYED_INFO', help='d
 
 argparser_phase = subparsers.add_parser('add_phase', help='add event phase')
 argparser_phase.add_argument('sessions', metavar='NO_SESSIONS', help='number of sessions in phase', type=int)
-argparser_phase.add_argument('boards', metavar='NO_BOARDS', help='number of boards in each session', type=int)
+argparser_phase.add_argument('boards', metavar='NO_BOARDS', help='number of boards in each session, also accepts syntax like "1-10,11-20,21-30", "3x7" is expanded to "1-7,8-14,15-21"', type=board_range)
 argparser_phase.add_argument('prefix', metavar='PREFIX', help='ouput file prefix ("#" will be replaced by session number)')
 argparser_phase.add_argument('description', nargs='?', metavar='DESCRIPTION', help='phase description')
 
@@ -39,6 +51,7 @@ argparser_generate.add_argument('session', nargs='?', metavar='SESSION', help='s
 argparser_generate.add_argument('--reserve', action='store_true', help='generate reserve board set')
 
 arguments = argparser.parse_args()
+
 
 # TODO: this should be an interface class, also rename SquareDeal to SQD or sth and this to SquareDeal
 if arguments.command == 'create':
