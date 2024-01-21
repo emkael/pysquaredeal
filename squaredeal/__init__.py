@@ -95,7 +95,11 @@ class SquareDealPhase(object):
                     '-e', reserve_info,
                     '-p', self._output_file_name(session+1, reserve),
                     '-n', board_ranges[session]]
-            subprocess.run(args, cwd=output_path)
+            try:
+                subprocess.run(args, cwd=output_path, capture_output=True, check=True)
+            except subprocess.CalledProcessError as ex:
+                raise SquareDealError(ex.stderr)
+
 
 
 class SquareDeal(object):
