@@ -1,6 +1,6 @@
 import os
 
-from squaredeal.sqd import SQD, SQDPhase, generate_session_key
+from squaredeal.sqd import SQD, SQDPhase, generate_session_key, validate_board_range_str
 
 
 class SquareDealError(Exception):
@@ -8,7 +8,6 @@ class SquareDealError(Exception):
 
 
 def squaredeal_board_range(arg_str):
-    from squaredeal.sqd import validate_board_range_str
     ranges = []
     for range_str in arg_str.split(','):
         range_match = re.match(r'^([0-9]+)x([0-9]+)$', range_str)
