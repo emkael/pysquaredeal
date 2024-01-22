@@ -1,0 +1,2 @@
+class SquareDealError(Exception):
+    pass

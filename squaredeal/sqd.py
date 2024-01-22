@@ -1,5 +1,7 @@
 import base64, hashlib, os, random, re, shutil, string, subprocess
 
+from squaredeal import SquareDealError
+
 
 def generate_session_key():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=60))
@@ -33,11 +35,7 @@ def validate_board_range_str(range_str):
     raise ValueError('Invalid board range definition: %s' % (range_str))
 
 
-class SquareDealError(Exception):
-    pass
-
-
-class SquareDealPhase(object):
+class SQDPhase(object):
     def __init__(self):
         self.sessions = 0
         self.boards = 0
@@ -77,8 +75,8 @@ class SquareDealPhase(object):
         return output_ranges[0:self.sessions]
 
     def generate(self, session, delayed_info, reserve=False, output_path=None):
-        if not SquareDeal.BIGDEALX_PATH:
-            raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
+        if not SQD.BIGDEALX_PATH:
+            raise SquareDealError('Path to BigDeal is not set, initialize SQD.BIGDEALX_PATH value')
         delayed_info = base64.b64encode(delayed_info.encode('utf-8')).decode()
         sessions_to_generate = parse_range_str(session, self.sessions)
         board_ranges = self._parse_board_ranges(self.boards)
@@ -88,7 +86,7 @@ class SquareDealPhase(object):
             session_left = session_key[0:session_key_len]
             session_right = session_key[session_key_len:]
             reserve_info = 'reserve' if reserve else 'original'
-            args = [SquareDeal.BIGDEALX_PATH,
+            args = [SQD.BIGDEALX_PATH,
                     '-W', session_left,
                     '-e', session_right,
                     '-e', delayed_info,
@@ -102,7 +100,7 @@ class SquareDealPhase(object):
 
 
 
-class SquareDeal(object):
+class SQD(object):
 
     BIGDEALX_PATH=None
 
@@ -132,7 +130,7 @@ class SquareDeal(object):
                 self.hash = linecontents
                 self.published = True
             elif linetype == 'SN':
-                phase = SquareDealPhase()
+                phase = SQDPhase()
                 phase.fromstring(linecontents)
                 self.phases.append(phase)
             else:
