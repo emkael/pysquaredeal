@@ -1,7 +1,5 @@
 import base64, hashlib, os, random, re, shutil, string, subprocess
 
-from squaredeal import SquareDealError
-
 
 def generate_session_key():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=60))
@@ -46,7 +44,7 @@ class SQDPhase(object):
     def fromstring(self, phasestr):
         parts = phasestr.split(':')
         if len(parts) != 4:
-            raise SquareDealError('Malformed phase definition: %s' % (phasestr))
+            raise ValueError('Malformed phase definition: %s' % (phasestr))
         self.sessions = int(parts[0])
         self.boards = parts[1]
         self.prefix = parts[2]
@@ -76,7 +74,7 @@ class SQDPhase(object):
 
     def generate(self, session, delayed_info, reserve=False, output_path=None):
         if not SQD.BIGDEALX_PATH:
-            raise SquareDealError('Path to BigDeal is not set, initialize SQD.BIGDEALX_PATH value')
+            raise ValueError('Path to BigDeal is not set, initialize SQD.BIGDEALX_PATH value')
         delayed_info = base64.b64encode(delayed_info.encode('utf-8')).decode()
         sessions_to_generate = parse_range_str(session, self.sessions)
         board_ranges = self._parse_board_ranges(self.boards)
@@ -96,7 +94,7 @@ class SQDPhase(object):
             try:
                 subprocess.run(args, cwd=output_path, capture_output=True, check=True)
             except subprocess.CalledProcessError as ex:
-                raise SquareDealError(ex.stderr)
+                raise Exception(ex.stderr)
 
 
 
@@ -134,7 +132,7 @@ class SQD(object):
                 phase.fromstring(linecontents)
                 self.phases.append(phase)
             else:
-                raise SquareDealError('Unrecognized tag %s on line %d' % (linetype, idx))
+                raise ValueError('Unrecognized tag %s on line %d' % (linetype, idx))
         if self.published:
             for phase in self.phases:
                 phase.s_keys = [None] * phase.sessions
@@ -144,31 +142,31 @@ class SQD(object):
                 with open(sqkpath, encoding=encoding) as sqkfile:
                     contents = [line.strip() for line in sqkfile.readlines()]
             except FileNotFoundError:
-                raise SquareDealError('Unable to locate SQK file for %s' % (sqdpath))
+                raise FileNotFoundError('Unable to locate SQK file for %s' % (sqdpath))
             for line in contents:
                 if not line.strip():
                     continue
                 lineparts = line.split(':')
                 if len(lineparts) != 2:
-                    raise SquareDealError('Malformed SQK line: %s' % (line))
+                    raise ValueError('Malformed SQK line: %s' % (line))
                 session = lineparts[0].split(',')
                 if len(session) != 2:
-                    raise SquareDealError('Malformed SQK line: %s' % (line))
+                    raise ValueError('Malformed SQK line: %s' % (line))
                 phase_no = int(session[0])
                 session_no = int(session[1])
                 try:
                     self.phases[phase_no-1].s_keys[session_no-1] = lineparts[1]
                 except IndexError:
-                    raise SquareDealError(
+                    raise IndexError(
                         'Session %s from SQK not declared in SQD' % (lineparts[0]))
             for ph_idx, phase in enumerate(self.phases):
                 for s_idx, s_key in enumerate(phase.s_keys):
                     if s_key is None:
-                        raise SquareDealError(
+                        raise IndexError(
                             'Session %d,%d missing a key in SQK' % (ph_idx+1, s_idx+1))
             sqk_hash = self._get_file_hash(sqkpath)
             if sqk_hash != self.hash:
-                raise SquareDealError(
+                raise ValueError(
                     'SQK hash mismtach: %s in SQD, % actual' % (self.hash, sqk_hash))
             self.sqd_path = sqdpath
 
@@ -197,7 +195,7 @@ class SQD(object):
             for ph_idx, phase in enumerate(self.phases):
                 for s_idx, session_key in enumerate(phase.s_keys):
                     if session_key is None:
-                        raise SquareDealError(
+                        raise IndexError(
                             'Missing session key for session %d,%d' % (ph_idx+1, s_idx+1))
                     sqkfile.write(
                         ('%d,%d:%s\r\n' % (ph_idx+1, s_idx+1, session_key)).encode('utf8'))
