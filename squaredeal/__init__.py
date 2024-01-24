@@ -1,4 +1,4 @@
-import re, subprocess
+import base64, os, re, subprocess
 
 from squaredeal.sqd import SQD, SQDPhase, generate_session_key, validate_board_range_str
 
@@ -17,6 +17,27 @@ def squaredeal_board_range(arg_str):
             continue
         ranges += [validate_board_range_str(range_str)]
     return ','.join(ranges)
+
+
+def parse_range_str(range_str, max_count):
+    range_start = 0
+    range_end = max_count
+    if range_str:
+        try:
+            range_start = int(range_str) - 1
+            range_end = range_start + 1
+        except ValueError:
+            range_match = re.match(r'([0-9]+)-([0-9]+)', range_str)
+            if range_match:
+                range_start = int(range_match.group(1))-1
+                range_end = int(range_match.group(2))
+            else:
+                raise ValueError('Invalid range string: %s' % (range_str))
+    if range_start < 0:
+        raise ValueError('Value out of range: 0')
+    if range_end > max_count:
+        raise ValueError('Value out of range: %d' % (range_end))
+    return range(range_start, range_end)
 
 
 class SquareDeal(object):
@@ -89,7 +110,28 @@ class SquareDeal(object):
         if not self.sqd.delayed_value:
             raise SquareDealError('Cannot generate PBN files: delayed information value not set')
         try:
-            self.sqd.generate(arguments.get('phase'), arguments.get('session'),
-                              reserve=arguments.get('reserve'), bigdealx_path=SquareDeal.BIGDEALX_PATH)
+            phases_to_generate = parse_range_str(arguments.get('phase'), len(self.sqd.phases))
+            for phase_idx in phases_to_generate:
+                phase = self.sqd.phases[phase_idx]
+                delayed_info = base64.b64encode(self.sqd.delayed_info.encode('utf-8')).decode()
+                sessions_to_generate = parse_range_str(arguments.get('session'), phase.sessions)
+                board_ranges = phase.parse_board_ranges(phase.boards)
+                for session in sessions_to_generate:
+                    session_key = phase.s_keys[session]
+                    session_key_len = int(len(session_key)/2)
+                    session_left = session_key[0:session_key_len]
+                    session_right = session_key[session_key_len:]
+                    reserve_info = 'reserve' if arguments.get('reserve') else 'original'
+                    args = [SquareDeal.BIGDEALX_PATH,
+                            '-W', session_left,
+                            '-e', session_right,
+                            '-e', delayed_info,
+                            '-e', reserve_info,
+                            '-p', phase.output_file_name(session+1, arguments.get('reserve')),
+                            '-n', board_ranges[session]]
+                    subprocess.run(
+                        args,
+                        cwd=os.path.realpath(os.path.dirname(self.sqd.sqd_path)) if self.sqd.sqd_path else None,
+                        capture_output=True, check=True)
         except subprocess.CalledProcessError as ex:
             raise SquareDealError('BigDeal invocation failed: %s' % (ex.stderr))

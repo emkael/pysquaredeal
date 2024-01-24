@@ -1,28 +1,8 @@
-import base64, hashlib, os, random, re, shutil, string, subprocess
+import hashlib, os, random, re, shutil, string, subprocess
 
 
 def generate_session_key():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=60))
-
-def parse_range_str(range_str, max_count):
-    range_start = 0
-    range_end = max_count
-    if range_str:
-        try:
-            range_start = int(range_str) - 1
-            range_end = range_start + 1
-        except ValueError:
-            range_match = re.match(r'([0-9]+)-([0-9]+)', range_str)
-            if range_match:
-                range_start = int(range_match.group(1))-1
-                range_end = int(range_match.group(2))
-            else:
-                raise ValueError('Invalid range string: %s' % (range_str))
-    if range_start < 0:
-        raise ValueError('Value out of range: 0')
-    if range_end > max_count:
-        raise ValueError('Value out of range: %d' % (range_end))
-    return range(range_start, range_end)
 
 
 def validate_board_range_str(range_str):
@@ -53,7 +33,7 @@ class SQDPhase(object):
     def tostring(self):
         return ':'.join([str(self.sessions), str(self.boards), self.prefix, self.info or ''])
 
-    def _output_file_name(self, session, reserve=False):
+    def output_file_name(self, session, reserve=False):
         prefix = self.prefix
         session_search = re.findall(r'#+', prefix)
         for session_match in sorted(session_search, reverse=True):
@@ -63,7 +43,7 @@ class SQDPhase(object):
             prefix += 'reserve'
         return prefix
 
-    def _parse_board_ranges(self, range_def):
+    def parse_board_ranges(self, range_def):
         ranges = [range_str.strip() for range_str in range_def.split(',')]
         for range_str in ranges:
             validate_board_range_str(range_str)
@@ -71,27 +51,6 @@ class SQDPhase(object):
         while len(output_ranges) < self.sessions:
             output_ranges += ranges
         return output_ranges[0:self.sessions]
-
-    def generate(self, session, delayed_info, reserve=False, output_path=None, bigdealx_path=None):
-        if not bigdealx_path:
-            raise FileNotFoundError('bigdealx_path not set')
-        delayed_info = base64.b64encode(delayed_info.encode('utf-8')).decode()
-        sessions_to_generate = parse_range_str(session, self.sessions)
-        board_ranges = self._parse_board_ranges(self.boards)
-        for session in sessions_to_generate:
-            session_key = self.s_keys[session]
-            session_key_len = int(len(session_key)/2)
-            session_left = session_key[0:session_key_len]
-            session_right = session_key[session_key_len:]
-            reserve_info = 'reserve' if reserve else 'original'
-            args = [bigdealx_path,
-                    '-W', session_left,
-                    '-e', session_right,
-                    '-e', delayed_info,
-                    '-e', reserve_info,
-                    '-p', self._output_file_name(session+1, reserve),
-                    '-n', board_ranges[session]]
-            subprocess.run(args, cwd=output_path, capture_output=True, check=True)
 
 
 
@@ -214,12 +173,3 @@ class SQD(object):
             sqd_contents.append('KH %s\n' % (self.hash))
         with open(sqdpath, 'w') as sqdfile:
             sqdfile.writelines(sqd_contents)
-
-    def generate(self, phase, session, reserve=False, bigdealx_path=None):
-        phases_to_generate = parse_range_str(phase, len(self.phases))
-        for phase in phases_to_generate:
-            self.phases[phase].generate(
-                session, self.delayed_value,
-                reserve=reserve,
-                output_path=os.path.realpath(os.path.dirname(self.sqd_path)) if self.sqd_path else None,
-                bigdealx_path=bigdealx_path)
