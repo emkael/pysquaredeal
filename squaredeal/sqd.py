@@ -57,6 +57,9 @@ class SQDPhase(object):
 class SQD(object):
 
     def __init__(self):
+        self._init_values()
+
+    def _init_values(self):
         self.name = ''
         self.delayed_info = ''
         self.delayed_value = ''
@@ -68,6 +71,7 @@ class SQD(object):
     def fromfile(self, sqdpath, sqkpath=None, encoding='utf-8'):
         with open(sqdpath, encoding=encoding) as sqdfile:
             contents = [line.strip() for line in sqdfile.readlines()]
+        self._init_values()
         for idx, line in enumerate(contents):
             if line.startswith('#'):
                 continue
