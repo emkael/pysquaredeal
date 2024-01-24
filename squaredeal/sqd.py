@@ -72,9 +72,9 @@ class SQDPhase(object):
             output_ranges += ranges
         return output_ranges[0:self.sessions]
 
-    def generate(self, session, delayed_info, reserve=False, output_path=None):
-        if not SQD.BIGDEALX_PATH:
-            raise ValueError('Path to BigDeal is not set, initialize SQD.BIGDEALX_PATH value')
+    def generate(self, session, delayed_info, reserve=False, output_path=None, bigdealx_path=None):
+        if not bigdealx_path:
+            raise FileNotFoundError('bigdealx_path not set')
         delayed_info = base64.b64encode(delayed_info.encode('utf-8')).decode()
         sessions_to_generate = parse_range_str(session, self.sessions)
         board_ranges = self._parse_board_ranges(self.boards)
@@ -84,23 +84,18 @@ class SQDPhase(object):
             session_left = session_key[0:session_key_len]
             session_right = session_key[session_key_len:]
             reserve_info = 'reserve' if reserve else 'original'
-            args = [SQD.BIGDEALX_PATH,
+            args = [bigdealx_path,
                     '-W', session_left,
                     '-e', session_right,
                     '-e', delayed_info,
                     '-e', reserve_info,
                     '-p', self._output_file_name(session+1, reserve),
                     '-n', board_ranges[session]]
-            try:
-                subprocess.run(args, cwd=output_path, capture_output=True, check=True)
-            except subprocess.CalledProcessError as ex:
-                raise Exception(ex.stderr)
+            subprocess.run(args, cwd=output_path, capture_output=True, check=True)
 
 
 
 class SQD(object):
-
-    BIGDEALX_PATH=None
 
     def __init__(self):
         self.name = ''
@@ -220,10 +215,11 @@ class SQD(object):
         with open(sqdpath, 'w') as sqdfile:
             sqdfile.writelines(sqd_contents)
 
-    def generate(self, phase, session, reserve=False):
+    def generate(self, phase, session, reserve=False, bigdealx_path=None):
         phases_to_generate = parse_range_str(phase, len(self.phases))
         for phase in phases_to_generate:
             self.phases[phase].generate(
                 session, self.delayed_value,
                 reserve=reserve,
-                output_path=os.path.realpath(os.path.dirname(self.sqd_path)) if self.sqd_path else None)
+                output_path=os.path.realpath(os.path.dirname(self.sqd_path)) if self.sqd_path else None,
+                bigdealx_path=bigdealx_path)

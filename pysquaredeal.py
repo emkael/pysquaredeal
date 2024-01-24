@@ -8,7 +8,7 @@ argparser = argparse.ArgumentParser(prog='pysquaredeal.py')
 argparser.add_argument('sqd_file', metavar='SQD_FILE', help='path to SQD file')
 argparser.add_argument('--sqk-file', metavar='SQK_FILE', help='path to SQK file, if not provided, deduced from SQD file', required=False)
 argparser.add_argument('--encoding', required=False, default='utf-8', metavar='ENCODING', help='SQD/SQK input file encoding, defaults to UTF-8, output is always UTF-8')
-argparser.add_argument('--bigdealx-path', required=False, metavar='BIGDEALX_PATH', help='path to bigdealx executable, defaults to BIGDEALX_PATH environment variable')
+argparser.add_argument('--bigdealx-path', required=False, default=os.environ.get('BIGDEALX_PATH'), metavar='BIGDEALX_PATH', help='path to bigdealx executable, defaults to BIGDEALX_PATH environment variable')
 
 subparsers = argparser.add_subparsers(title='command-specific arguments', metavar='COMMAND', dest='command')
 
@@ -39,6 +39,9 @@ argparser_generate.add_argument('session', nargs='?', metavar='SESSION', help='s
 argparser_generate.add_argument('--reserve', action='store_true', help='generate reserve board set')
 
 arguments = argparser.parse_args()
+
+
+SquareDeal.BIGDEALX_PATH = arguments.bigdealx_path
 
 sq = SquareDeal()
 getattr(sq, arguments.command)(**vars(arguments))

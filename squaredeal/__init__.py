@@ -1,4 +1,4 @@
-import os
+import re, subprocess
 
 from squaredeal.sqd import SQD, SQDPhase, generate_session_key, validate_board_range_str
 
@@ -20,6 +20,9 @@ def squaredeal_board_range(arg_str):
 
 
 class SquareDeal(object):
+# TODO: docstrings for command parameters
+
+    BIGDEALX_PATH = None
 
     def __init__(self):
         self.sqd = SQD()
@@ -78,12 +81,15 @@ class SquareDeal(object):
         self.sqd.tofile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
 
     def generate(self, **arguments):
-        if arguments.get('bigdealx_path') is None:
-            arguments['bigdealx_path'] = os.environ.get('BIGDEALX_PATH', None)
-        SQD.BIGDEALX_PATH = arguments.get('bigdealx_path')
+        if not SquareDeal.BIGDEALX_PATH:
+            raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
         self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
         if not self.sqd.published:
             raise SquareDealError('Cannot generate PBN files: event info is not marked as published')
         if not self.sqd.delayed_value:
             raise SquareDealError('Cannot generate PBN files: delayed information value not set')
-        self.sqd.generate(arguments.get('phase'), arguments.get('session'), reserve=arguments.get('reserve'))
+        try:
+            self.sqd.generate(arguments.get('phase'), arguments.get('session'),
+                              reserve=arguments.get('reserve'), bigdealx_path=SquareDeal.BIGDEALX_PATH)
+        except subprocess.CalledProcessError as ex:
+            raise SquareDealError('BigDeal invocation failed: %s' % (ex.stderr))
