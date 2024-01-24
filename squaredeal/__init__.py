@@ -51,36 +51,47 @@ class SquareDeal(object):
     def create(self, **arguments):
         self.sqd.name = arguments.get('event_name')
         self.sqd.delayed_info = arguments.get('delayed_information')
+
         self.sqd.tofile(arguments.get('sqd_file'))
 
     def set_name(self, **arguments):
         self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+
         if self.sqd.published:
             raise SquareDealError('Cannot change name: event already published')
+
         self.sqd.name = arguments.get('event_name')
+
         self.sqd.tofile(arguments.get('sqd_file'))
 
     def set_di(self, **arguments):
         self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+
         if self.sqd.published:
             raise SquareDealError('Cannot change delayed information description: event already published')
+
         self.sqd.delayed_info = arguments.get('delayed_information')
+
         self.sqd.tofile(arguments.get('sqd_file'))
 
     def add_phase(self, **arguments):
         self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+
         if self.sqd.published:
             raise SquareDealError('Cannot add phase: event already published')
+
         sdphase = SQDPhase()
         sdphase.sessions = arguments.get('sessions')
         sdphase.boards = arguments.get('boards')
         sdphase.prefix = arguments.get('prefix')
         sdphase.info = arguments.get('description')
         self.sqd.phases.append(sdphase)
+
         self.sqd.tofile(arguments.get('sqd_file'))
 
     def publish(self, **arguments):
         self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+
         if self.sqd.published:
             raise SquareDealError('Cannot mark as published: event already published')
         if not self.sqd.name:
@@ -89,26 +100,34 @@ class SquareDeal(object):
             raise SquareDealError('Cannot mark as published: delayed information is not set')
         if not self.sqd.phases:
             raise SquareDealError('Cannot mark as published: no phases are defined')
+
         for sdphase in self.sqd.phases:
             sdphase.s_keys = [generate_session_key() for s in range(0, sdphase.sessions)]
         self.sqd.published = True
+
         self.sqd.tofile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
 
     def set_dv(self, **arguments):
         self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+
         if not self.sqd.published:
             raise SquareDealError('Cannot set delayed information value: event not published')
+
         self.sqd.delayed_value = arguments.get('delayed_information')
+
         self.sqd.tofile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
 
     def generate(self, **arguments):
         if not SquareDeal.BIGDEALX_PATH:
             raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
+
         self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+
         if not self.sqd.published:
             raise SquareDealError('Cannot generate PBN files: event info is not marked as published')
         if not self.sqd.delayed_value:
             raise SquareDealError('Cannot generate PBN files: delayed information value not set')
+
         try:
             phases_to_generate = parse_range_str(arguments.get('phase'), len(self.sqd.phases))
             for phase_idx in phases_to_generate:
