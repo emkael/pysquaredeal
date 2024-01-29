@@ -52,7 +52,11 @@ class SquareDeal(object):
         self.sqd.name = arguments.get('event_name')
         self.sqd.delayed_info = arguments.get('delayed_information')
 
-        self.sqd.tofile(arguments.get('sqd_file'))
+        sqd_file = arguments.get('sqd_file')
+        if os.path.exists(sqd_file) and not arguments.get('overwrite'):
+            raise FileExistsError(sqd_file)
+
+        self.sqd.tofile(sqd_file)
 
     def set_name(self, **arguments):
         self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))

@@ -15,6 +15,7 @@ subparsers = argparser.add_subparsers(title='command-specific arguments', metava
 argparser_create = subparsers.add_parser('create', help='create new SQD/SQK pair')
 argparser_create.add_argument('--event-name', required=False, metavar='EVENT_NAME', help='event name (description)')
 argparser_create.add_argument('--delayed-information', required=False, metavar='DELAYED_INFO', help='(description of) delayed information')
+argparser_create.add_argument('--overwrite', action='store_true', help='overwrite output file if exists, otherwise error is raised')
 
 argparser_name = subparsers.add_parser('set_name', help='edit event name')
 argparser_name.add_argument('event_name', metavar='EVENT_NAME', help='event name (description)')
