@@ -41,60 +41,60 @@ def parse_range_str(range_str, max_count):
 
 
 class SquareDeal(object):
-# TODO: docstrings for command parameters
 
     BIGDEALX_PATH = None
 
-    def __init__(self):
+    def __init__(self, sqd_file, sqk_file=None):
         self.sqd = SQD()
+        self.sqd_file = sqd_file
+        self.sqk_file = sqk_file
 
-    def create(self, **arguments):
-        self.sqd.name = arguments.get('event_name')
-        self.sqd.delayed_info = arguments.get('delayed_information')
+    def create(self, event_name=None, delayed_information=None, overwrite=False, **kwargs):
+        self.sqd.name = event_name
+        self.sqd.delayed_info = delayed_information
 
-        sqd_file = arguments.get('sqd_file')
-        if os.path.exists(sqd_file) and not arguments.get('overwrite'):
-            raise FileExistsError(sqd_file)
+        if os.path.exists(self.sqd_file) and not overwrite:
+            raise FileExistsError(self.sqd_file)
 
-        self.sqd.tofile(sqd_file)
+        self.sqd.tofile(self.sqd_file)
 
-    def set_name(self, **arguments):
-        self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+    def set_name(self, event_name, **kwargs):
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
 
         if self.sqd.published:
             raise SquareDealError('Cannot change name: event already published')
 
-        self.sqd.name = arguments.get('event_name')
+        self.sqd.name = event_name
 
-        self.sqd.tofile(arguments.get('sqd_file'))
+        self.sqd.tofile(self.sqd_file)
 
-    def set_di(self, **arguments):
-        self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+    def set_di(self, delayed_information, **kwargs):
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
 
         if self.sqd.published:
             raise SquareDealError('Cannot change delayed information description: event already published')
 
-        self.sqd.delayed_info = arguments.get('delayed_information')
+        self.sqd.delayed_info = delayed_information
 
-        self.sqd.tofile(arguments.get('sqd_file'))
+        self.sqd.tofile(self.sqd_file)
 
-    def add_phase(self, **arguments):
-        self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+    def add_phase(self, sessions, boards, prefix, description='', **kwargs):
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
 
         if self.sqd.published:
             raise SquareDealError('Cannot add phase: event already published')
 
         sdphase = SQDPhase()
-        sdphase.sessions = arguments.get('sessions')
-        sdphase.boards = arguments.get('boards')
-        sdphase.prefix = arguments.get('prefix')
-        sdphase.info = arguments.get('description')
+        sdphase.sessions = sessions
+        sdphase.boards = boards
+        sdphase.prefix = prefix
+        sdphase.info = description
         self.sqd.phases.append(sdphase)
 
-        self.sqd.tofile(arguments.get('sqd_file'))
+        self.sqd.tofile(self.sqd_file)
 
-    def publish(self, **arguments):
-        self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+    def publish(self, **kwargs):
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
 
         if self.sqd.published:
             raise SquareDealError('Cannot mark as published: event already published')
@@ -109,23 +109,23 @@ class SquareDeal(object):
             sdphase.s_keys = [generate_session_key() for s in range(0, sdphase.sessions)]
         self.sqd.published = True
 
-        self.sqd.tofile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+        self.sqd.tofile(self.sqd_file, sqkpath=self.sqk_file)
 
-    def set_dv(self, **arguments):
-        self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+    def set_dv(self, delayed_information, **kwargs):
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
 
         if not self.sqd.published:
             raise SquareDealError('Cannot set delayed information value: event not published')
 
-        self.sqd.delayed_value = arguments.get('delayed_information')
+        self.sqd.delayed_value = delayed_information
 
-        self.sqd.tofile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+        self.sqd.tofile(self.sqd_file)
 
-    def generate(self, **arguments):
+    def generate(self, phase, session, reserve=False, **kwargs):
         if not SquareDeal.BIGDEALX_PATH:
             raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
 
-        self.sqd.fromfile(arguments.get('sqd_file'), sqkpath=arguments.get('sqk_file'))
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
 
         if not self.sqd.published:
             raise SquareDealError('Cannot generate PBN files: event info is not marked as published')
@@ -133,24 +133,24 @@ class SquareDeal(object):
             raise SquareDealError('Cannot generate PBN files: delayed information value not set')
 
         try:
-            phases_to_generate = parse_range_str(arguments.get('phase'), len(self.sqd.phases))
+            phases_to_generate = parse_range_str(phase, len(self.sqd.phases))
             for phase_idx in phases_to_generate:
                 phase = self.sqd.phases[phase_idx]
                 delayed_info = base64.b64encode(self.sqd.delayed_value.encode('utf-8')).decode()
-                sessions_to_generate = parse_range_str(arguments.get('session'), phase.sessions)
+                sessions_to_generate = parse_range_str(session, phase.sessions)
                 board_ranges = phase.parse_board_ranges(phase.boards)
                 for session in sessions_to_generate:
                     session_key = phase.s_keys[session]
                     session_key_len = int(len(session_key)/2)
                     session_left = session_key[0:session_key_len]
                     session_right = session_key[session_key_len:]
-                    reserve_info = 'reserve' if arguments.get('reserve') else 'original'
+                    reserve_info = 'reserve' if reserve else 'original'
                     args = [SquareDeal.BIGDEALX_PATH,
                             '-W', session_left,
                             '-e', session_right,
                             '-e', delayed_info,
                             '-e', reserve_info,
-                            '-p', phase.output_file_name(session+1, arguments.get('reserve')),
+                            '-p', phase.output_file_name(session+1, reserve),
                             '-n', board_ranges[session]]
                     subprocess.run(
                         args,

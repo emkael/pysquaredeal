@@ -44,5 +44,5 @@ arguments = argparser.parse_args()
 
 SquareDeal.BIGDEALX_PATH = arguments.bigdealx_path
 
-sq = SquareDeal()
+sq = SquareDeal(arguments.sqd_file, sqk_file=arguments.sqk_file)
 getattr(sq, arguments.command)(**vars(arguments))
