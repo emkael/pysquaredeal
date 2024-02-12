@@ -136,7 +136,7 @@ class SquareDeal(object):
             phases_to_generate = parse_range_str(arguments.get('phase'), len(self.sqd.phases))
             for phase_idx in phases_to_generate:
                 phase = self.sqd.phases[phase_idx]
-                delayed_info = base64.b64encode(self.sqd.delayed_info.encode('utf-8')).decode()
+                delayed_info = base64.b64encode(self.sqd.delayed_value.encode('utf-8')).decode()
                 sessions_to_generate = parse_range_str(arguments.get('session'), phase.sessions)
                 board_ranges = phase.parse_board_ranges(phase.boards)
                 for session in sessions_to_generate:
