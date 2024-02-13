@@ -68,7 +68,9 @@ class SQD(object):
         self.published = False
         self.sqd_path = None
 
-    def fromfile(self, sqdpath, sqkpath=None, encoding='utf-8'):
+    def fromfile(self, sqdpath, sqkpath=None, encoding=None):
+        if not encoding:
+            encoding = 'utf-8'
         with open(sqdpath, encoding=encoding) as sqdfile:
             contents = [line.strip() for line in sqdfile.readlines()]
         self._init_values()

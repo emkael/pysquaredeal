@@ -44,10 +44,11 @@ class SquareDeal(object):
 
     BIGDEALX_PATH = None
 
-    def __init__(self, sqd_file, sqk_file=None):
+    def __init__(self, sqd_file, sqk_file=None, encoding=None):
         self.sqd = SQD()
         self.sqd_file = sqd_file
         self.sqk_file = sqk_file
+        self.sqd_encoding = encoding
 
     def create(self, event_name=None, delayed_information=None, overwrite=False, **kwargs):
         self.sqd.name = event_name
@@ -59,7 +60,7 @@ class SquareDeal(object):
         self.sqd.tofile(self.sqd_file)
 
     def set_name(self, event_name, **kwargs):
-        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file, encoding=self.sqd_encoding)
 
         if self.sqd.published:
             raise SquareDealError('Cannot change name: event already published')
@@ -69,7 +70,7 @@ class SquareDeal(object):
         self.sqd.tofile(self.sqd_file)
 
     def set_di(self, delayed_information, **kwargs):
-        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file, encoding=self.sqd_encoding)
 
         if self.sqd.published:
             raise SquareDealError('Cannot change delayed information description: event already published')
@@ -79,7 +80,7 @@ class SquareDeal(object):
         self.sqd.tofile(self.sqd_file)
 
     def add_phase(self, sessions, boards, prefix, description='', **kwargs):
-        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file, encoding=self.sqd_encoding)
 
         if self.sqd.published:
             raise SquareDealError('Cannot add phase: event already published')
@@ -94,7 +95,7 @@ class SquareDeal(object):
         self.sqd.tofile(self.sqd_file)
 
     def publish(self, **kwargs):
-        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file, encoding=self.sqd_encoding)
 
         if self.sqd.published:
             raise SquareDealError('Cannot mark as published: event already published')
@@ -112,7 +113,7 @@ class SquareDeal(object):
         self.sqd.tofile(self.sqd_file, sqkpath=self.sqk_file)
 
     def set_dv(self, delayed_information, **kwargs):
-        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file, encoding=self.sqd_encoding)
 
         if not self.sqd.published:
             raise SquareDealError('Cannot set delayed information value: event not published')
@@ -125,7 +126,7 @@ class SquareDeal(object):
         if not SquareDeal.BIGDEALX_PATH:
             raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
 
-        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file)
+        self.sqd.fromfile(self.sqd_file, sqkpath=self.sqk_file, encoding=self.sqd_encoding)
 
         if not self.sqd.published:
             raise SquareDealError('Cannot generate PBN files: event info is not marked as published')
