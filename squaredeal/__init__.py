@@ -122,6 +122,15 @@ class SquareDeal(object):
 
         self.sqd.tofile(self.sqd_file)
 
+    def _ensure_rcfile(self, rcfile_path):
+        if os.path.isfile(rcfile_path):
+            return True
+        with open(rcfile_path, 'w') as rcfile:
+            rcfile.write('[BigDeal]\n')
+            rcfile.write('formats=pbn\n')
+            rcfile.write('askformats=no\n')
+            rcfile.write('owner=PySquareDeal\n')
+
     def generate(self, phase, session, reserve=False, **kwargs):
         if not SquareDeal.BIGDEALX_PATH:
             raise SquareDealError('Path to BigDeal is not set, initialize SquareDeal.BIGDEALX_PATH value')
@@ -153,9 +162,12 @@ class SquareDeal(object):
                             '-e', reserve_info,
                             '-p', phase.output_file_name(session+1, reserve),
                             '-n', board_ranges[session]]
+                    working_dir = os.path.realpath(os.path.dirname(self.sqd.sqd_path)) if self.sqd.sqd_path else None
+                    rcfile_path = os.path.join(working_dir or '', '.bigdealrc')
+                    rcfile_exists = self._ensure_rcfile(rcfile_path)
                     subprocess.run(
-                        args,
-                        cwd=os.path.realpath(os.path.dirname(self.sqd.sqd_path)) if self.sqd.sqd_path else None,
-                        capture_output=True, check=True)
+                        args, cwd=working_dir, capture_output=True, check=True)
+                    if not rcfile_exists:
+                        os.unlink(rcfile_path)
         except subprocess.CalledProcessError as ex:
             raise SquareDealError('BigDeal invocation failed: %s' % (ex.stderr))
