@@ -26,7 +26,7 @@ argparser_di.add_argument('delayed_information', metavar='DELAYED_INFO', help='d
 argparser_phase = subparsers.add_parser('add_phase', help='add event phase')
 argparser_phase.add_argument('sessions', metavar='NO_SESSIONS', help='number of sessions in phase', type=int)
 argparser_phase.add_argument('boards', metavar='NO_BOARDS', help='number of boards in each session, also accepts syntax like "1-10,11-20,21-30", "3x7" is expanded to "1-7,8-14,15-21"', type=squaredeal_board_range)
-argparser_phase.add_argument('prefix', metavar='PREFIX', help='ouput file prefix ("#" will be replaced by session number)')
+argparser_phase.add_argument('prefix', metavar='PREFIX', help='output file prefix ("#" will be replaced by session number)')
 argparser_phase.add_argument('description', nargs='?', metavar='DESCRIPTION', help='phase description')
 
 argparser_publish = subparsers.add_parser('publish', help='mark SQD as published')
