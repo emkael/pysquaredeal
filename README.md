@@ -90,7 +90,7 @@ python pysquaredeal.py SQD_FILE set_dv DELAYED_INFO
  * `DELAYED_INFO`: value of delayed information
 
 ```
-pyton pysquaredeal.py SQD_FILE generate [--reserve] [PHASE] [SESSION]
+python pysquaredeal.py SQD_FILE generate [--reserve] [PHASE] [SESSION]
 ```
 
 positional arguments:
